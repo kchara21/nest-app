@@ -1,0 +1,8 @@
+{
+  "type": "cockroachdb",
+  "url":"postgresql://<username>:<password>@<host>:<port>/<database>",
+  "ssl":true,
+  "entities": ["dist/**/*.entity.js"], 
+  "synchronize": true,
+  "extra": {"options":"--cluster=..."}
+}
