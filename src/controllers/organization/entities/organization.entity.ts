@@ -5,16 +5,7 @@ import {
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
-import {
-  Equals,
-  IsEmail,
-  IsNotEmpty,
-  Length,
-  Max,
-  MaxLength,
-  Min,
-  MinLength,
-} from 'class-validator';
+import { MaxLength } from 'class-validator';
 import { Tribe } from '../../tribe/entities/tribe.entity';
 
 @Entity()
