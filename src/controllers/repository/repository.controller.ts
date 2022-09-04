@@ -9,4 +9,9 @@ export class RepositoryController {
   findAll(@Param('id') id: string) {
     return this.repositoryService.findRepositoriesByTribe(id);
   }
+
+  @Get('tribe/:id/report')
+  exportReport(@Param('id') id: string) {
+    return this.repositoryService.exportReportByTribe(id);
+  }
 }
