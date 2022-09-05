@@ -5,7 +5,7 @@ import {
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
-import { MaxLength } from 'class-validator';
+import { IsNotEmpty, MaxLength, MinLength } from 'class-validator';
 import { Tribe } from '../../tribe/entities/tribe.entity';
 
 @Entity()
@@ -22,6 +22,8 @@ export class Organization {
   tribes: Tribe[];
 
   @Column({ nullable: false })
+  @IsNotEmpty()
+  @MinLength(10)
   @MaxLength(50)
   name: string;
 
