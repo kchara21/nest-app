@@ -1,4 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
@@ -7,32 +12,67 @@ import { Organization } from './entities/organization.entity';
 
 @Injectable()
 export class OrganizationService {
+  private readonly logger = new Logger(OrganizationService.name);
   constructor(
     @InjectRepository(Organization)
     private organizationRepo: Repository<Organization>,
   ) {}
 
-  create(createOrganizationDto: CreateOrganizationDto): Promise<Organization> {
-    return this.organizationRepo.save(createOrganizationDto);
+  async create(organization: CreateOrganizationDto) {
+    console.log('organization->', organization);
+    const organizationExist = await this.organizationRepo.findOne({
+      where: { name: organization.name, status: 1 },
+    });
+    console.log('organizationExist->', organizationExist);
+    if (organizationExist) {
+      this.logger.debug(`La organizacion ${organization.name} ya existe`);
+      throw new ConflictException(
+        `La organizacion ${organization.name} ya existe`,
+      );
+    }
+    console.log('buenas');
+    return this.organizationRepo.save(organization);
   }
 
   async findAll(params): Promise<Organization[]> {
-    return await this.organizationRepo.find();
+    const repositories = await this.organizationRepo.find();
+    if (repositories.length < 1) {
+      this.logger.debug('No se encontraron organizaciones');
+      throw new NotFoundException('No se encontraron organizaciones');
+    }
+    return repositories;
   }
 
   async findOne(id: string): Promise<Organization> {
-    return await this.organizationRepo.findOne({
-      where: { id_organization: +id },
+    const organization = await this.organizationRepo.findOne({
+      where: { id_organization: +id, status: 1 },
     });
+    if (!organization) {
+      this.logger.debug('La organizacion no existe');
+      throw new NotFoundException('La organizacion no existe');
+    }
+    return organization;
   }
 
   async update(
     id: string,
     updateOrganizationDto: UpdateOrganizationDto,
   ): Promise<Organization> {
-    const toUpdate = await this.organizationRepo.findOne({
-      where: { id_organization: +id },
+    const toUpdate = await this.findOne(id);
+    if (!toUpdate) {
+      this.logger.debug('La organizacion a editar no existe');
+      throw new NotFoundException('La organizacion a editar no existe');
+    }
+
+    const organizationExist = await this.organizationRepo.findOne({
+      where: { name: updateOrganizationDto.name, status: 1 },
     });
+
+    if (organizationExist) {
+      this.logger.debug('La organizacion ya existe');
+      throw new ConflictException('La organizacion ya existe');
+    }
+
     const updated = Object.assign(toUpdate, updateOrganizationDto);
     return this.organizationRepo.save(updated);
   }
