@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository as Repo } from './entities/repository.entity';
 import { Repository } from 'typeorm';
@@ -12,6 +12,7 @@ import {
 } from './interfaces/repository.interface';
 @Injectable()
 export class RepositoryService {
+  private readonly logger = new Logger(RepositoryService.name);
   constructor(
     @InjectRepository(Repo)
     private organizationRepo: Repository<Repo>,
@@ -35,7 +36,8 @@ export class RepositoryService {
       .getMany();
 
     if (metricRepository.length < 1) {
-      return metricRepository;
+      this.logger.debug('La Tribu no se encuentra registrada');
+      throw new NotFoundException('La Tribu no se encuentra registrada');
     }
 
     const metricsCoverage = metricRepository.filter(
@@ -43,7 +45,12 @@ export class RepositoryService {
     );
 
     if (metricsCoverage.length < 1) {
-      return metricsCoverage;
+      this.logger.debug(
+        'La Tribu no tiene repositorios que cumplan con la cobertura necesaria',
+      );
+      throw new NotFoundException(
+        'La Tribu no tiene repositorios que cumplan con la cobertura necesaria',
+      );
     }
 
     const repositoriesState: RespositoryMock[] =
@@ -78,8 +85,7 @@ export class RepositoryService {
 
   async exportReportByTribe(id: string) {
     const repositories: any = await this.findRepositoriesByTribe(id);
-    console.log('repositories->', repositories);
-    const ws = fs.createWriteStream('repositories.csv');
+    const ws = fs.createWriteStream(`repositories.csv`);
     fastcsv.write(repositories, { headers: true }).pipe(ws);
   }
 
@@ -90,7 +96,10 @@ export class RepositoryService {
     let stateCode = 603;
     const repositories: RespositoryMock[] = [];
 
-    if (repoDataSource.length < 1) return;
+    if (repoDataSource.length < 1) {
+      this.logger.debug('No se encontraron repositorios');
+      throw new NotFoundException('No se encontraron repositorios');
+    }
     for (const repo of repoDataSource) {
       stateCode++;
       repositories.push({ id: repo.id_repository, state: stateCode });
