@@ -81,7 +81,7 @@ export class RepositoryService {
       });
     }
 
-    return repositories;
+    return { repositories: repositories };
   }
 
   async exportReportByTribe(id: string) {
