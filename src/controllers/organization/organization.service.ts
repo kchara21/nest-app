@@ -19,18 +19,15 @@ export class OrganizationService {
   ) {}
 
   async create(organization: CreateOrganizationDto) {
-    console.log('organization->', organization);
     const organizationExist = await this.organizationRepo.findOne({
       where: { name: organization.name, status: 1 },
     });
-    console.log('organizationExist->', organizationExist);
     if (organizationExist) {
       this.logger.debug(`La organizacion ${organization.name} ya existe`);
       throw new ConflictException(
         `La organizacion ${organization.name} ya existe`,
       );
     }
-    console.log('buenas');
     return this.organizationRepo.save(organization);
   }
 
