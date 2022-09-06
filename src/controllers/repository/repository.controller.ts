@@ -14,8 +14,8 @@ export class RepositoryController {
   }
 
   @Get('tribe/:id/report')
+  @UseFilters(new HttpExceptionFilter())
   exportReport(@Param('id') id: string) {
-    this.repositoryService.exportReportByTribe(id);
-    return new ApiResponse('Exportacion exitosa');
+    return this.repositoryService.exportReportByTribe(id);
   }
 }
