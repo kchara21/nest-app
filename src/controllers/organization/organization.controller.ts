@@ -50,7 +50,8 @@ export class OrganizationController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string): Promise<Organization> {
-    return this.organizationService.remove(id);
+  remove(@Param('id') id: string) {
+    this.organizationService.remove(id);
+    return new ApiResponse(`Organizacion con id ${id} eliminado`);
   }
 }
