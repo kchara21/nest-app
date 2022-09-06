@@ -6,6 +6,7 @@ import * as moment from 'moment';
 import * as fs from 'fs';
 import * as fastcsv from 'fast-csv';
 import { Metric } from '../metric/entities/entity.entity';
+import { ApiResponse } from '../../shared/dto/api-response.dto';
 import {
   Repository_Interface,
   RespositoryMock,
@@ -87,6 +88,7 @@ export class RepositoryService {
     const repositories: any = await this.findRepositoriesByTribe(id);
     const ws = fs.createWriteStream(`repositories.csv`);
     fastcsv.write(repositories, { headers: true }).pipe(ws);
+    return new ApiResponse('Exportacion exitosa');
   }
 
   async getRepositoriesMock() {
