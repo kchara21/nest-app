@@ -23,7 +23,6 @@ export class RepositoryService {
 
   async findRepositoriesByTribe(id: string) {
     const currentDate = moment().year() + '-01-01  00:00:00.000';
-    const repositories: Repository_Interface[] = [];
     const metricRepository: Metric[] = await this.metricRepo
       .createQueryBuilder('metric')
       .innerJoinAndSelect('metric.repository', 'repository')
@@ -54,6 +53,14 @@ export class RepositoryService {
       );
     }
 
+    return metricsCoverage;
+
+    const metrics = this.asignVerificationCode(metricsCoverage);
+    return metrics;
+  }
+
+  async asignVerificationCode(metricsCoverage: any) {
+    const repositories: Repository_Interface[] = [];
     const repositoriesState: RespositoryMock[] =
       await this.getRepositoriesMock();
 
@@ -102,7 +109,7 @@ export class RepositoryService {
       this.logger.debug('No se encontraron repositorios');
       throw new NotFoundException('No se encontraron repositorios');
     }
-    for (const repo of repoDataSource) {
+    for await (const repo of repoDataSource) {
       stateCode++;
       repositories.push({ id: repo.id_repository, state: stateCode });
       if (stateCode > 605) stateCode = 603;
