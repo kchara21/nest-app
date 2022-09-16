@@ -1,29 +1,25 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository as Repo } from './entities/repository.entity';
 import { Repository } from 'typeorm';
 import * as moment from 'moment';
 import * as fs from 'fs';
 import * as fastcsv from 'fast-csv';
 import { Metric } from '../metric/entities/entity.entity';
 import { ApiResponse } from '../../shared/dto/api-response.dto';
-import {
-  Repository_Interface,
-  RespositoryMock,
-} from './interfaces/repository.interface';
+import { Metric_Repositories_By_Tribe } from '../metric/interfaces/metric-repositories-by-tribe.interface';
+import { MetricsResponse } from '../metric/dto/response-metric-repositories-by-tribe.dto';
+import { RespositoryMock } from './interfaces/repository.interface';
 @Injectable()
 export class RepositoryService {
   private readonly logger = new Logger(RepositoryService.name);
   constructor(
-    @InjectRepository(Repo)
-    private organizationRepo: Repository<Repo>,
     @InjectRepository(Metric)
     private metricRepo: Repository<Metric>,
   ) {}
 
   async findRepositoriesByTribe(id: string) {
     const currentDate = moment().year() + '-01-01  00:00:00.000';
-    const metricRepository: Metric[] = await this.metricRepo
+    const metricsRepositoriesByTribe: Metric[] = await this.metricRepo
       .createQueryBuilder('metric')
       .innerJoinAndSelect('metric.repository', 'repository')
       .innerJoinAndSelect('repository.tribe', 'tribe')
@@ -35,89 +31,83 @@ export class RepositoryService {
       })
       .getMany();
 
-    if (metricRepository.length < 1) {
-      this.logger.debug('La Tribu no se encuentra registrada');
+    if (metricsRepositoriesByTribe.length < 1) {
       throw new NotFoundException('La Tribu no se encuentra registrada');
     }
 
-    const metricsCoverage = metricRepository.filter(
-      (metric) => metric.coverage > 75,
-    );
+    const withCoverage_metricsRepositoriesByTribe =
+      metricsRepositoriesByTribe.filter((metric) => metric.coverage > 75);
 
-    if (metricsCoverage.length < 1) {
-      this.logger.debug(
-        'La Tribu no tiene repositorios que cumplan con la cobertura necesaria',
-      );
+    if (withCoverage_metricsRepositoriesByTribe.length < 1) {
       throw new NotFoundException(
         'La Tribu no tiene repositorios que cumplan con la cobertura necesaria',
       );
     }
 
-    return metricsCoverage;
+    const response_MetricsRepositoriesByTribe: Metric_Repositories_By_Tribe[] =
+      await this.asignVerificationCode(withCoverage_metricsRepositoriesByTribe);
 
-    const metrics = this.asignVerificationCode(metricsCoverage);
-    return metrics;
+    return response_MetricsRepositoriesByTribe;
   }
 
-  async asignVerificationCode(metricsCoverage: any) {
-    const repositories: Repository_Interface[] = [];
-    const repositoriesState: RespositoryMock[] =
-      await this.getRepositoriesMock();
-
-    for (const metric of metricsCoverage) {
-      const stateEntity = repositoriesState.find(
-        (item) => item.id === metric.repository.id_repository,
-      );
-      if (!stateEntity) return;
-
-      const repository_verificationState =
-        await this.resolveMockVerificationCode(stateEntity.state);
-
-      repositories.push({
-        id: metric.repository.id_repository,
-        name: metric.repository.name,
-        tribe: metric.repository.tribe.name,
-        organization: metric.repository.tribe.organization.name,
-        coverage: metric.coverage + '%',
-        codeSmells: metric.code_smells,
-        bugs: metric.bugs,
-        vulnerabilities: metric.vulnerabilities,
-        hotspots: metric.hotspot,
-        verificationState: repository_verificationState,
-        state: this.resolveVerificationCode(metric.repository.state),
-      });
-    }
-
-    return { repositories: repositories };
-  }
-
-  async exportReportByTribe(id: string) {
-    const repositories: any = await this.findRepositoriesByTribe(id);
-    const ws = fs.createWriteStream(`repositories.csv`);
-    fastcsv.write(repositories, { headers: true }).pipe(ws);
-    return new ApiResponse('Exportacion exitosa');
-  }
-
-  async getRepositoriesMock() {
-    const repoDataSource: Repo[] = await this.organizationRepo.find({
-      where: { status: 'A' },
-    });
+  async getRepositoriesVerificationMock(
+    metricsRepositoriesByTribeWithCoverage: Metric_Repositories_By_Tribe[],
+  ) {
     let stateCode = 603;
-    const repositories: RespositoryMock[] = [];
+    const repositoriesCodeVerification: RespositoryMock[] = [];
 
-    if (repoDataSource.length < 1) {
+    if (metricsRepositoriesByTribeWithCoverage.length < 1) {
       this.logger.debug('No se encontraron repositorios');
       throw new NotFoundException('No se encontraron repositorios');
     }
-    for await (const repo of repoDataSource) {
+
+    for await (const repo of metricsRepositoriesByTribeWithCoverage) {
       stateCode++;
-      repositories.push({ id: repo.id_repository, state: stateCode });
+      repositoriesCodeVerification.push({
+        id: repo.repository.id_repository,
+        state: stateCode,
+      });
       if (stateCode > 605) stateCode = 603;
     }
-    return repositories;
+
+    return repositoriesCodeVerification;
   }
 
-  resolveVerificationCode(code: string) {
+  async asignVerificationCode(
+    withCoverage_metricsRepositoriesByTribe: any,
+  ): Promise<MetricsResponse[]> {
+    const responseMetricsRepositoriesByTribe: Metric_Repositories_By_Tribe[] =
+      [];
+    const repositoriesByTribeMocked: RespositoryMock[] =
+      await this.getRepositoriesVerificationMock(
+        withCoverage_metricsRepositoriesByTribe,
+      );
+
+    for (const dataMetric of withCoverage_metricsRepositoriesByTribe) {
+      const repositoryMocked: RespositoryMock = repositoriesByTribeMocked.find(
+        (item) => item.id === dataMetric.repository.id_repository,
+      );
+
+      const repository_verificationStateResolve =
+        await this.resolveMockVerificationCode(repositoryMocked.state);
+
+      const stateResolved = await this.resolveStateCode(
+        dataMetric.repository.state,
+      );
+
+      responseMetricsRepositoriesByTribe.push({
+        ...dataMetric,
+        repository: {
+          verificationState: repository_verificationStateResolve,
+          state: stateResolved,
+          ...dataMetric.repository,
+        },
+      });
+    }
+    return responseMetricsRepositoriesByTribe;
+  }
+
+  resolveStateCode(code: string) {
     const verificationState: any = {
       E: 'Enabled',
       D: 'Disabled',
@@ -135,5 +125,13 @@ export class RepositoryService {
     };
 
     return verificationCodeResolver[code];
+  }
+
+  async exportReportByTribe(id: string) {
+    const repositories: Metric_Repositories_By_Tribe[] =
+      await this.findRepositoriesByTribe(id);
+    const ws = fs.createWriteStream(`repositories.csv`);
+    fastcsv.write(repositories, { headers: true }).pipe(ws);
+    return new ApiResponse('Exportacion exitosa');
   }
 }

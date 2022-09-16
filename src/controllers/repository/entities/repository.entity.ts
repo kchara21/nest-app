@@ -11,7 +11,7 @@ import { MaxLength } from 'class-validator';
 import { Tribe } from '../../tribe/entities/tribe.entity';
 // import {state,status } from '../interfaces/repository.interface';
 
-export type state = 'E' | 'E' | 'A';
+export type state = 'E' | 'D' | 'A';
 export type status = 'A' | 'I';
 
 @Entity()
@@ -31,12 +31,12 @@ export class Repository {
   name: string;
 
   @Column({ nullable: false })
-  state: state;
+  state: string;
 
   @Column({ nullable: false, type: 'json' })
   @CreateDateColumn()
   create_time: Timestamp;
 
   @Column({ nullable: false })
-  status: status;
+  status: string;
 }
