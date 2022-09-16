@@ -2,13 +2,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { RepositoryService } from './repository.service';
 import { Metric } from '../metric/entities/entity.entity';
-import { Repository as Repo } from './entities/repository.entity';
-import { createMock } from '@golevelup/ts-jest';
 
 describe('Repository Service', () => {
   const mockMetricByTribe = {
     id_metric: 25,
-    coverage: '76.00',
+    coverage: '78.00',
     bugs: 5,
     vulnerabilities: 3,
     hotspot: 2,
@@ -16,7 +14,7 @@ describe('Repository Service', () => {
     repository: {
       id_repository: 29,
       name: 'repo_nttdata2',
-      state: 'E',
+      state: 'Enabled',
       create_time: '2022-08-28T18:33:58.501Z',
       status: 'A',
       tribe: {
@@ -29,6 +27,7 @@ describe('Repository Service', () => {
           status: 1,
         },
       },
+      verificationState: 'Verificado',
     },
   };
 
@@ -52,17 +51,13 @@ describe('Repository Service', () => {
           provide: getRepositoryToken(Metric),
           useValue: mockMetricRepository,
         },
-        {
-          provide: getRepositoryToken(Repo),
-          useValue: createMock(),
-        },
       ],
     }).compile();
 
     service = module.get<RepositoryService>(RepositoryService);
   });
 
-  it('Should be defined', () => {
+  it('Debe estar definido', () => {
     expect(service).toBeDefined();
   });
 
@@ -106,7 +101,7 @@ describe('Repository Service', () => {
       repository: {
         id_repository: 29,
         name: 'repo_nttdata2',
-        state: 'E',
+        state: 'Enabled',
         create_time: '2022-08-28T18:33:58.501Z',
         status: 'A',
         tribe: {
@@ -119,6 +114,7 @@ describe('Repository Service', () => {
             status: 1,
           },
         },
+        verificationState: 'Verificado',
       },
     };
 
