@@ -44,18 +44,9 @@ export class RepositoryService {
       );
     }
 
-    console.log(
-      'withCoverage_metricsRepositoriesByTribe',
-      withCoverage_metricsRepositoriesByTribe,
-    );
-
     const response_MetricsRepositoriesByTribe: Metric_Repositories_By_Tribe[] =
       await this.asignVerificationCode(withCoverage_metricsRepositoriesByTribe);
 
-    console.log(
-      'response_MetricsRepositoriesByTribe->',
-      response_MetricsRepositoriesByTribe,
-    );
     return response_MetricsRepositoriesByTribe;
   }
 
@@ -67,8 +58,6 @@ export class RepositoryService {
       await this.getRepositoriesVerificationMock(
         withCoverage_metricsRepositoriesByTribe,
       );
-
-    console.log('repositoriesByTribeMocked', repositoriesByTribeMocked);
 
     for (const dataMetric of withCoverage_metricsRepositoriesByTribe) {
       const repositoryMocked: RespositoryMock = repositoriesByTribeMocked.find(
