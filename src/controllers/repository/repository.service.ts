@@ -47,37 +47,17 @@ export class RepositoryService {
     const response_MetricsRepositoriesByTribe: Metric_Repositories_By_Tribe[] =
       await this.asignVerificationCode(withCoverage_metricsRepositoriesByTribe);
 
+    console.log(
+      'response_MetricsRepositoriesByTribe->',
+      response_MetricsRepositoriesByTribe,
+    );
     return response_MetricsRepositoriesByTribe;
-  }
-
-  async getRepositoriesVerificationMock(
-    metricsRepositoriesByTribeWithCoverage: Metric_Repositories_By_Tribe[],
-  ) {
-    let stateCode = 603;
-    const repositoriesCodeVerification: RespositoryMock[] = [];
-
-    if (metricsRepositoriesByTribeWithCoverage.length < 1) {
-      this.logger.debug('No se encontraron repositorios');
-      throw new NotFoundException('No se encontraron repositorios');
-    }
-
-    for await (const repo of metricsRepositoriesByTribeWithCoverage) {
-      stateCode++;
-      repositoriesCodeVerification.push({
-        id: repo.repository.id_repository,
-        state: stateCode,
-      });
-      if (stateCode > 605) stateCode = 603;
-    }
-
-    return repositoriesCodeVerification;
   }
 
   async asignVerificationCode(
     withCoverage_metricsRepositoriesByTribe: any,
   ): Promise<MetricsResponse[]> {
-    const responseMetricsRepositoriesByTribe: Metric_Repositories_By_Tribe[] =
-      [];
+    const responseMetricsRepositoriesByTribe: any = [];
     const repositoriesByTribeMocked: RespositoryMock[] =
       await this.getRepositoriesVerificationMock(
         withCoverage_metricsRepositoriesByTribe,
@@ -98,16 +78,38 @@ export class RepositoryService {
       responseMetricsRepositoriesByTribe.push({
         ...dataMetric,
         repository: {
-          verificationState: repository_verificationStateResolve,
-          state: stateResolved,
           ...dataMetric.repository,
+          state: stateResolved,
+          verificationState: repository_verificationStateResolve,
         },
       });
     }
     return responseMetricsRepositoriesByTribe;
   }
 
-  resolveStateCode(code: string) {
+  async getRepositoriesVerificationMock(
+    metricsRepositoriesByTribeWithCoverage: Metric_Repositories_By_Tribe[],
+  ) {
+    let stateCode = 603;
+    const repositoriesCodeVerification: RespositoryMock[] = [];
+
+    if (metricsRepositoriesByTribeWithCoverage.length < 1) {
+      throw new NotFoundException('No se encontraron repositorios');
+    }
+
+    for await (const repo of metricsRepositoriesByTribeWithCoverage) {
+      stateCode++;
+      repositoriesCodeVerification.push({
+        id: repo.repository.id_repository,
+        state: stateCode,
+      });
+      if (stateCode > 605) stateCode = 603;
+    }
+
+    return repositoriesCodeVerification;
+  }
+
+  async resolveStateCode(code: string) {
     const verificationState: any = {
       E: 'Enabled',
       D: 'Disabled',
@@ -117,7 +119,7 @@ export class RepositoryService {
     return verificationState[code];
   }
 
-  resolveMockVerificationCode(code: number) {
+  async resolveMockVerificationCode(code: number) {
     const verificationCodeResolver: any = {
       604: 'Verificado',
       605: 'En espera',
