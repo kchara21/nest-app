@@ -9,7 +9,7 @@ export class RepositoryResponse implements Repository_Interface {
   readonly codeSmells: number;
   readonly bugs: number;
   readonly vulnerabilities: number;
-  readonly hotspots: number;
+  readonly hotspot: number;
   readonly verificationState: string;
   readonly state: string;
   constructor(dto: RepositoryResponse) {

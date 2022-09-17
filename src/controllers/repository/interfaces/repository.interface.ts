@@ -8,7 +8,7 @@ export interface Repository_Interface {
   codeSmells: number;
   bugs: number;
   vulnerabilities: number;
-  hotspots: number;
+  hotspot: number;
   verificationState: string;
   state: string;
 }
