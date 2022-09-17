@@ -14,7 +14,7 @@ describe('Repository Service', () => {
     repository: {
       id_repository: 29,
       name: 'repo_nttdata2',
-      state: 'Enabled',
+      state: 'E',
       create_time: '2022-08-28T18:33:58.501Z',
       status: 'A',
       tribe: {
@@ -62,12 +62,40 @@ describe('Repository Service', () => {
   });
 
   it('Obtener métricas de repositorios por tribu', async () => {
+    const mockMetricByTribeResolved = {
+      id_metric: 25,
+      coverage: '78.00',
+      bugs: 5,
+      vulnerabilities: 3,
+      hotspot: 2,
+      code_smells: 1,
+      repository: {
+        id_repository: 29,
+        name: 'repo_nttdata2',
+        state: 'Enabled',
+        create_time: '2022-08-28T18:33:58.501Z',
+        status: 'A',
+        tribe: {
+          id_tribe: 23,
+          name: 'tribe_front_02',
+          status: 1,
+          organization: {
+            id_organization: 27,
+            name: 'kchara',
+            status: 1,
+          },
+        },
+        verificationState: 'Verificado',
+      },
+    };
+
     const idTribe = 23;
     try {
       const metricsResponse = await service.findRepositoriesByTribe(
         idTribe + '',
       );
-      expect(metricsResponse).toEqual([mockMetricByTribe]);
+
+      expect(metricsResponse).toEqual([mockMetricByTribeResolved]);
     } catch (e) {
       expect(e.message).toEqual('La Tribu no se encuentra registrada');
     }
