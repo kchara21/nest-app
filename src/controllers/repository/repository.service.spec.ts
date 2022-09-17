@@ -4,7 +4,7 @@ import { RepositoryService } from './repository.service';
 import { Metric } from '../metric/entities/entity.entity';
 
 describe('Repository Service', () => {
-  const mockMetricByTribe = {
+  const mockMetricsRepositoriesByTribe: any = {
     id_metric: 25,
     coverage: '78.00',
     bugs: 5,
@@ -27,6 +27,32 @@ describe('Repository Service', () => {
           status: 1,
         },
       },
+    },
+  };
+
+  const mockMetricRepositoriesByTribeResolved: any = {
+    id_metric: 25,
+    coverage: '78.00',
+    bugs: 5,
+    vulnerabilities: 3,
+    hotspot: 2,
+    code_smells: 1,
+    repository: {
+      id_repository: 29,
+      name: 'repo_nttdata2',
+      state: 'Enabled',
+      create_time: '2022-08-28T18:33:58.501Z',
+      status: 'A',
+      tribe: {
+        id_tribe: 23,
+        name: 'tribe_front_02',
+        status: 1,
+        organization: {
+          id_organization: 27,
+          name: 'kchara',
+          status: 1,
+        },
+      },
       verificationState: 'Verificado',
     },
   };
@@ -36,7 +62,7 @@ describe('Repository Service', () => {
       innerJoinAndSelect: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
       andWhere: jest.fn().mockReturnThis(),
-      getMany: jest.fn().mockReturnValue([mockMetricByTribe]),
+      getMany: jest.fn().mockReturnValue([mockMetricsRepositoriesByTribe]),
       filter: jest.fn().mockReturnThis(),
     })),
   };
@@ -62,40 +88,14 @@ describe('Repository Service', () => {
   });
 
   it('Obtener métricas de repositorios por tribu', async () => {
-    const mockMetricByTribeResolved = {
-      id_metric: 25,
-      coverage: '78.00',
-      bugs: 5,
-      vulnerabilities: 3,
-      hotspot: 2,
-      code_smells: 1,
-      repository: {
-        id_repository: 29,
-        name: 'repo_nttdata2',
-        state: 'Enabled',
-        create_time: '2022-08-28T18:33:58.501Z',
-        status: 'A',
-        tribe: {
-          id_tribe: 23,
-          name: 'tribe_front_02',
-          status: 1,
-          organization: {
-            id_organization: 27,
-            name: 'kchara',
-            status: 1,
-          },
-        },
-        verificationState: 'Verificado',
-      },
-    };
+    const repositoriesByTribeMocked = [{ id: 29, state: 604 }];
 
-    const idTribe = 23;
     try {
-      const metricsResponse = await service.findRepositoriesByTribe(
-        idTribe + '',
-      );
+      const metricsResponse = await service.getRepositoriesVerificationMock([
+        mockMetricsRepositoriesByTribe,
+      ]);
 
-      expect(metricsResponse).toEqual([mockMetricByTribeResolved]);
+      expect(metricsResponse).toEqual(repositoriesByTribeMocked);
     } catch (e) {
       expect(e.message).toEqual('La Tribu no se encuentra registrada');
     }
@@ -113,6 +113,19 @@ describe('Repository Service', () => {
 
     try {
       await service.findRepositoriesByTribe(idTribe + '');
+    } catch (e) {
+      expect(e.message).toEqual('La Tribu no se encuentra registrada');
+    }
+  });
+
+  it('Información de verificación.', async () => {
+    const idTribe = 23;
+    try {
+      const metricsResponse = await service.findRepositoriesByTribe(
+        idTribe + '',
+      );
+
+      expect(metricsResponse).toEqual([mockMetricRepositoriesByTribeResolved]);
     } catch (e) {
       expect(e.message).toEqual('La Tribu no se encuentra registrada');
     }
